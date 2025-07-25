@@ -298,14 +298,10 @@ class StarBot:
             return False
 
     async def start_bot(self):
-        # Ping API server on startup
         print("Попытка пинга API сервера...")
         api_ok = await self.ping_api_server()
         if not api_ok:
             print("🔴 Не удалось подключиться к API серверу. Работа бота может быть нарушена.")
-            # Decide if you want to exit or continue
-            # For now, it will continue, but you might want to add sys.exit(1) here
-            # or only proceed if API is available for critical functions.
         else:
             print("🟢 API сервер доступен.")
 
