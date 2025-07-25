@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Config (sensitive data)
+config.json
+
+# Database
+db.json
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# WPF Build artifacts
+WpfApp2/WpfApp2/bin/
+WpfApp2/WpfApp2/obj/
+WpfApp2/packages/
+*.user
+*.suo
+*.cache
+
+# Node modules (if any)
+node_modules/
+
+# Backup files
+*.bak
+*.backup

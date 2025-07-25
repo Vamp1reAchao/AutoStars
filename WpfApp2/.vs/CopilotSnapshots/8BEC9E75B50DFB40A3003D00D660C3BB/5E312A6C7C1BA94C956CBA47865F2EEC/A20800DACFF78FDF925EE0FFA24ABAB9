@@ -1,0 +1,200 @@
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Animation;
+
+namespace WpfApp2
+{
+    public partial class MainWindow : Window
+    {
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out UIntPtr lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+
+        const int PROCESS_CREATE_THREAD = 0x0002;
+        const int PROCESS_QUERY_INFORMATION = 0x0400;
+        const int PROCESS_VM_OPERATION = 0x0008;
+        const int PROCESS_VM_WRITE = 0x0020;
+        const int PROCESS_VM_READ = 0x0010;
+
+        const uint MEM_COMMIT = 0x00001000;
+        const uint MEM_RESERVE = 0x00002000;
+        const uint PAGE_READWRITE = 4;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            // Установка плейсхолдеров
+            LoginTextBox.Text = "Username";
+            LoginTextBox.GotFocus += RemovePlaceholder;
+            LoginTextBox.LostFocus += AddPlaceholder;
+        }
+
+        private void RemovePlaceholder(object sender, RoutedEventArgs e)
+        {
+            if (LoginTextBox.Text == "Username")
+                LoginTextBox.Text = "";
+        }
+
+        private void AddPlaceholder(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(LoginTextBox.Text))
+                LoginTextBox.Text = "Username";
+        }
+
+        private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (LoginTextBox.Text == "123" && PasswordBox.Password == "123")
+            {
+                await AnimatePanel(LoginPanel, false);
+                LoadingPanel.Visibility = Visibility.Visible;
+                await AnimatePanel(LoadingPanel, true);
+                
+                // Имитация загрузки
+                await Task.Delay(2000);
+                
+                await AnimatePanel(LoadingPanel, false);
+                LoadingPanel.Visibility = Visibility.Collapsed;
+                MainPanel.Visibility = Visibility.Visible;
+                await AnimatePanel(MainPanel, true);
+
+                LogTextBox.Text = "[INFO] Successfully authenticated\n";
+            }
+            else
+            {
+                LogTextBox.Text = "[ERROR] Invalid credentials\n";
+                LoginTextBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                PasswordBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                await Task.Delay(2000);
+                LoginTextBox.BorderBrush = System.Windows.Media.Brushes.Gray;
+                PasswordBox.BorderBrush = System.Windows.Media.Brushes.Gray;
+            }
+        }
+
+        private async void InjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cheat.dll");
+                if (!File.Exists(dllPath))
+                {
+                    LogTextBox.Text += "[ERROR] DLL file not found!\n";
+                    return;
+                }
+
+                Process[] processes = Process.GetProcessesByName("cs2");
+                if (processes.Length == 0)
+                {
+                    LogTextBox.Text += "[ERROR] CS2 process not found!\n";
+                    return;
+                }
+
+                LogTextBox.Text += "[INFO] Starting injection process...\n";
+                Process targetProcess = processes[0];
+
+                // Получаем доступ к процессу
+                IntPtr procHandle = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, false, targetProcess.Id);
+                if (procHandle == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Failed to open process!\n";
+                    return;
+                }
+
+                // Получаем адрес LoadLibraryA
+                IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+                if (loadLibraryAddr == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Failed to get LoadLibraryA address!\n";
+                    return;
+                }
+
+                // Выделяем память в процессе
+                byte[] dllPathBytes = System.Text.Encoding.ASCII.GetBytes(dllPath);
+                IntPtr allocMemAddress = VirtualAllocEx(procHandle, IntPtr.Zero, (uint)dllPathBytes.Length, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+                if (allocMemAddress == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Failed to allocate memory!\n";
+                    return;
+                }
+
+                // Записываем путь к DLL в память процесса
+                UIntPtr bytesWritten;
+                if (!WriteProcessMemory(procHandle, allocMemAddress, dllPathBytes, (uint)dllPathBytes.Length, out bytesWritten))
+                {
+                    LogTextBox.Text += "[ERROR] Failed to write to process memory!\n";
+                    return;
+                }
+
+                // Создаем удаленный поток для загрузки DLL
+                IntPtr threadHandle = CreateRemoteThread(procHandle, IntPtr.Zero, 0, loadLibraryAddr, allocMemAddress, 0, IntPtr.Zero);
+                if (threadHandle == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Failed to create remote thread!\n";
+                    return;
+                }
+
+                LogTextBox.Text += "[SUCCESS] DLL successfully injected!\n";
+                ScrollLogToEnd();
+            }
+            catch (Exception ex)
+            {
+                LogTextBox.Text += $"[ERROR] {ex.Message}\n";
+            }
+        }
+
+        private void UpdateLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogTextBox.Text += $"[{DateTime.Now:HH:mm:ss}] Checking for updates...\n";
+            LogTextBox.Text += $"[{DateTime.Now:HH:mm:ss}] Product is up to date\n";
+            ScrollLogToEnd();
+        }
+
+        private async Task AnimatePanel(FrameworkElement panel, bool fadeIn)
+        {
+            var animation = new DoubleAnimation
+            {
+                From = fadeIn ? 0 : 1,
+                To = fadeIn ? 1 : 0,
+                Duration = TimeSpan.FromMilliseconds(300)
+            };
+
+            panel.BeginAnimation(OpacityProperty, animation);
+            await Task.Delay(300);
+        }
+
+        private void ScrollLogToEnd()
+        {
+            LogTextBox.ScrollToEnd();
+        }
+    }
+}

@@ -1,0 +1,105 @@
+﻿using System;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Animation;
+
+namespace WpfApp2
+{
+    public partial class MainWindow : Window
+    {
+        public MainWindow()
+        {
+            InitializeComponent();
+            // Установка плейсхолдеров
+            LoginTextBox.Text = "Username";
+            LoginTextBox.GotFocus += RemovePlaceholder;
+            LoginTextBox.LostFocus += AddPlaceholder;
+        }
+
+        private void RemovePlaceholder(object sender, RoutedEventArgs e)
+        {
+            if (LoginTextBox.Text == "Username")
+                LoginTextBox.Text = "";
+        }
+
+        private void AddPlaceholder(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(LoginTextBox.Text))
+                LoginTextBox.Text = "Username";
+        }
+
+        private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (LoginTextBox.Text == "123" && PasswordBox.Password == "123")
+            {
+                await AnimatePanel(LoginPanel, false);
+                LoadingPanel.Visibility = Visibility.Visible;
+                await AnimatePanel(LoadingPanel, true);
+                
+                // Имитация загрузки
+                await Task.Delay(2000);
+                
+                await AnimatePanel(LoadingPanel, false);
+                LoadingPanel.Visibility = Visibility.Collapsed;
+                MainPanel.Visibility = Visibility.Visible;
+                await AnimatePanel(MainPanel, true);
+
+                LogTextBox.Text = "[INFO] Successfully authenticated\n";
+            }
+            else
+            {
+                LogTextBox.Text = "[ERROR] Invalid credentials\n";
+                LoginTextBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                PasswordBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                await Task.Delay(2000);
+                LoginTextBox.BorderBrush = System.Windows.Media.Brushes.Gray;
+                PasswordBox.BorderBrush = System.Windows.Media.Brushes.Gray;
+            }
+        }
+
+        private void InjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogTextBox.Text += $"[{DateTime.Now:HH:mm:ss}] Injection process started...\n";
+            LogTextBox.Text += $"[{DateTime.Now:HH:mm:ss}] Successfully injected into CS2\n";
+            ScrollLogToEnd();
+        }
+
+        private void UpdateLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogTextBox.Text += $"[{DateTime.Now:HH:mm:ss}] Checking for updates...\n";
+            LogTextBox.Text += $"[{DateTime.Now:HH:mm:ss}] Product is up to date\n";
+            ScrollLogToEnd();
+        }
+
+        private async Task AnimatePanel(FrameworkElement panel, bool fadeIn)
+        {
+            var animation = new DoubleAnimation
+            {
+                From = fadeIn ? 0 : 1,
+                To = fadeIn ? 1 : 0,
+                Duration = TimeSpan.FromMilliseconds(300)
+            };
+
+            panel.BeginAnimation(OpacityProperty, animation);
+            await Task.Delay(300);
+        }
+
+        private void ScrollLogToEnd()
+        {
+            LogTextBox.ScrollToEnd();
+        }
+    }
+}

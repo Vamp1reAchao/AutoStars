@@ -1,0 +1,20 @@
+{
+  "API": {
+    "url": "http://docs.lunovr.ru/api/buyStars",
+    "token": "YOUR_API_TOKEN_HERE",
+    "ping_url": "https://docs.lunovr.ru/api/ping"
+  },
+  "BOT": {
+    "enabled": 1,
+    "bot_token": "YOUR_BOT_TOKEN_HERE"
+  },
+  "FUNPAY": {
+    "golden_key": "YOUR_GOLDEN_KEY_HERE"
+  },
+  "SETTINGS": {
+    "db_path": "db.json",
+    "request_timeout": 10,
+    "order_check_interval": 10,
+    "admin_telegram_id": null
+  }
+}

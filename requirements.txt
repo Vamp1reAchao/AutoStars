@@ -1,0 +1,4 @@
+aiohttp==3.9.1
+aiogram==3.4.1
+FunPayAPI==1.1.9
+flet==0.21.2

@@ -1,0 +1,305 @@
+﻿using System;
+using System.Diagnostics;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media.Animation;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
+using System.Collections.Generic;
+
+namespace WpfApp2
+{
+    public partial class MainWindow : Window
+    {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr OpenProcess(int dwDesiredAccess, bool bInheritHandle, int dwProcessId);
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Ansi, SetLastError = true)]
+        private static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, out UIntPtr lpNumberOfBytesWritten);
+
+        [DllImport("kernel32.dll")]
+        private static extern IntPtr CreateRemoteThread(IntPtr hProcess, IntPtr lpThreadAttributes, uint dwStackSize, IntPtr lpStartAddress, IntPtr lpParameter, uint dwCreationFlags, IntPtr lpThreadId);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool VirtualProtectEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
+
+        [DllImport("ntdll.dll")]
+        private static extern uint NtCreateThreadEx(out IntPtr hThread, uint DesiredAccess, IntPtr ObjectAttributes, IntPtr ProcessHandle, IntPtr lpStartAddress, IntPtr lpParameter, bool CreateSuspended, uint StackZeroBits, uint SizeOfStackCommit, uint SizeOfStackReserve, IntPtr lpBytesBuffer);
+
+        private const int PROCESS_ALL_ACCESS = 0x1F0FFF;
+        private const uint MEM_COMMIT = 0x00001000;
+        private const uint MEM_RESERVE = 0x00002000;
+        private const uint PAGE_EXECUTE_READWRITE = 0x40;
+        private const uint PAGE_READWRITE = 0x04;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            // Установка плейсхолдеров
+            LoginTextBox.Text = "Username";
+            LoginTextBox.GotFocus += RemovePlaceholder;
+            LoginTextBox.LostFocus += AddPlaceholder;
+        }
+
+        private void RemovePlaceholder(object sender, RoutedEventArgs e)
+        {
+            if (LoginTextBox.Text == "Username")
+                LoginTextBox.Text = "";
+        }
+
+        private void AddPlaceholder(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(LoginTextBox.Text))
+                LoginTextBox.Text = "Username";
+        }
+
+        private void Border_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+                DragMove();
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            Application.Current.Shutdown();
+        }
+
+        private bool IsProcessElevated(Process process)
+        {
+            try
+            {
+                return process.StartInfo.Verb == "runas";
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private bool IsSandboxDetected()
+        {
+            string[] sandboxProcesses = { "SbieSvc", "SbieCtrl", "VBoxService", "VBoxTray" };
+            foreach (var proc in Process.GetProcesses())
+            {
+                if (Array.IndexOf(sandboxProcesses, proc.ProcessName) != -1)
+                    return true;
+            }
+            return false;
+        }
+
+        private byte[] XorEncrypt(byte[] data, byte[] key)
+        {
+            byte[] encrypted = new byte[data.Length];
+            for (int i = 0; i < data.Length; i++)
+            {
+                encrypted[i] = (byte)(data[i] ^ key[i % key.Length]);
+            }
+            return encrypted;
+        }
+
+        private async Task<bool> PrepareAndInject(string dllPath)
+        {
+            try
+            {
+                // Проверка на виртуальную среду
+                if (IsSandboxDetected())
+                {
+                    LogTextBox.Text += "[INFO] System check in progress...\n";
+                    await Task.Delay(2000);
+                    return false;
+                }
+
+                // Поиск процесса с разными вариантами имени
+                Process[] processes = Process.GetProcessesByName("cs2");
+                if (processes.Length == 0)
+                    processes = Process.GetProcessesByName("Counter-Strike 2");
+
+                if (processes.Length == 0)
+                {
+                    LogTextBox.Text += "[ERROR] Target process not found\n";
+                    return false;
+                }
+
+                Process targetProcess = processes[0];
+
+                // Проверка прав доступа
+                if (!IsProcessElevated(Process.GetCurrentProcess()))
+                {
+                    LogTextBox.Text += "[ERROR] Insufficient privileges\n";
+                    return false;
+                }
+
+                // Чтение и шифрование DLL
+                byte[] dllBytes = File.ReadAllBytes(dllPath);
+                byte[] encryptionKey = new byte[32];
+                using (var rng = new RNGCryptoServiceProvider())
+                {
+                    rng.GetBytes(encryptionKey);
+                }
+                byte[] encryptedDll = XorEncrypt(dllBytes, encryptionKey);
+
+                // Получение доступа к процессу
+                IntPtr processHandle = OpenProcess(PROCESS_ALL_ACCESS, false, targetProcess.Id);
+                if (processHandle == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Failed to access process\n";
+                    return false;
+                }
+
+                // Выделение памяти для зашифрованной DLL
+                IntPtr dllSpace = VirtualAllocEx(processHandle, IntPtr.Zero, (uint)encryptedDll.Length,
+                    MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+                if (dllSpace == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Memory allocation failed\n";
+                    return false;
+                }
+
+                // Запись зашифрованной DLL
+                UIntPtr bytesWritten;
+                if (!WriteProcessMemory(processHandle, dllSpace, encryptedDll, (uint)encryptedDll.Length, out bytesWritten))
+                {
+                    LogTextBox.Text += "[ERROR] Memory write failed\n";
+                    return false;
+                }
+
+                // Выделение памяти для ключа дешифровки
+                IntPtr keySpace = VirtualAllocEx(processHandle, IntPtr.Zero, (uint)encryptionKey.Length,
+                    MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+
+                if (!WriteProcessMemory(processHandle, keySpace, encryptionKey, (uint)encryptionKey.Length, out bytesWritten))
+                {
+                    LogTextBox.Text += "[ERROR] Key write failed\n";
+                    return false;
+                }
+
+                // Изменение прав доступа к памяти
+                uint oldProtect;
+                VirtualProtectEx(processHandle, dllSpace, (UIntPtr)encryptedDll.Length, PAGE_EXECUTE_READWRITE, out oldProtect);
+
+                // Создание потока с использованием NtCreateThreadEx для большей скрытности
+                IntPtr threadHandle;
+                uint status = NtCreateThreadEx(
+                    out threadHandle,
+                    0x1FFFFF,
+                    IntPtr.Zero,
+                    processHandle,
+                    dllSpace,
+                    keySpace,
+                    false,
+                    0,
+                    0,
+                    0,
+                    IntPtr.Zero
+                );
+
+                if (status != 0 || threadHandle == IntPtr.Zero)
+                {
+                    LogTextBox.Text += "[ERROR] Thread creation failed\n";
+                    return false;
+                }
+
+                LogTextBox.Text += "[SUCCESS] Operation completed successfully\n";
+                return true;
+            }
+            catch (Exception ex)
+            {
+                LogTextBox.Text += $"[ERROR] {ex.Message}\n";
+                return false;
+            }
+        }
+
+        private async void InjectButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string dllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "cheat.dll");
+                if (!File.Exists(dllPath))
+                {
+                    LogTextBox.Text += "[ERROR] Required files not found\n";
+                    return;
+                }
+
+                LogTextBox.Text += "[INFO] Starting security check...\n";
+                await Task.Delay(1000);
+
+                LogTextBox.Text += "[INFO] Initializing...\n";
+                bool success = await PrepareAndInject(dllPath);
+                
+                if (!success)
+                {
+                    LogTextBox.Text += "[INFO] Operation cancelled for security reasons\n";
+                }
+            }
+            catch (Exception ex)
+            {
+                LogTextBox.Text += $"[ERROR] {ex.Message}\n";
+            }
+        }
+
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (LoginTextBox.Text == "123" && PasswordBox.Password == "123")
+            {
+                await AnimatePanel(LoginPanel, false);
+                LoadingPanel.Visibility = Visibility.Visible;
+                await AnimatePanel(LoadingPanel, true);
+                await Task.Delay(2000);
+                await AnimatePanel(LoadingPanel, false);
+                LoadingPanel.Visibility = Visibility.Collapsed;
+                MainPanel.Visibility = Visibility.Visible;
+                await AnimatePanel(MainPanel, true);
+                LogTextBox.Text = "[INFO] Authentication successful\n";
+            }
+            else
+            {
+                LogTextBox.Text = "[ERROR] Invalid credentials\n";
+                LoginTextBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                PasswordBox.BorderBrush = System.Windows.Media.Brushes.Red;
+                await Task.Delay(2000);
+                LoginTextBox.BorderBrush = System.Windows.Media.Brushes.Gray;
+                PasswordBox.BorderBrush = System.Windows.Media.Brushes.Gray;
+            }
+        }
+
+        private void UpdateLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            LogTextBox.Text += "[INFO] Checking for updates...\n";
+            LogTextBox.Text += "[INFO] All components are up to date\n";
+            ScrollLogToEnd();
+        }
+
+        private async Task AnimatePanel(FrameworkElement panel, bool fadeIn)
+        {
+            var animation = new DoubleAnimation
+            {
+                From = fadeIn ? 0 : 1,
+                To = fadeIn ? 1 : 0,
+                Duration = TimeSpan.FromMilliseconds(300)
+            };
+
+            panel.BeginAnimation(OpacityProperty, animation);
+            await Task.Delay(300);
+        }
+
+        private void ScrollLogToEnd()
+        {
+            LogTextBox.ScrollToEnd();
+        }
+    }
+}

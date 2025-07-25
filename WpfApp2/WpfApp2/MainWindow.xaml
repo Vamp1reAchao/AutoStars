@@ -1,0 +1,404 @@
+<Window x:Class="WpfApp2.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="🌟 AutoStars - Quantum Control System" Height="750" Width="1000" 
+        WindowStyle="None" 
+        ResizeMode="NoResize" 
+        WindowStartupLocation="CenterScreen" 
+        AllowsTransparency="True"
+        Background="Transparent">
+    <Window.Resources>
+        <!-- Cyber Dark Theme -->
+        <SolidColorBrush x:Key="CyberPrimary" Color="#00F5FF"/>
+        <SolidColorBrush x:Key="CyberAccent" Color="#0080FF"/>
+        <SolidColorBrush x:Key="CyberBackground" Color="#000000"/>
+        <SolidColorBrush x:Key="CyberSurface" Color="#1A1A1A"/>
+        <SolidColorBrush x:Key="CyberSecondary" Color="#2A2A2A"/>
+        
+        <!-- Glow Effects -->
+        <DropShadowEffect x:Key="CyberGlow" 
+                          BlurRadius="20" 
+                          ShadowDepth="0" 
+                          Color="#00F5FF" 
+                          Opacity="0.6"/>
+        
+        <DropShadowEffect x:Key="ButtonGlow" 
+                          BlurRadius="15" 
+                          ShadowDepth="0" 
+                          Color="#00F5FF" 
+                          Opacity="0.8"/>
+        
+        <!-- Gradients -->
+        <LinearGradientBrush x:Key="BackgroundGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#000000" Offset="0"/>
+            <GradientStop Color="#0A0A0A" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="PanelGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#1A1A1A" Offset="0"/>
+            <GradientStop Color="#2A2A2A" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <LinearGradientBrush x:Key="ButtonGradient" StartPoint="0,0" EndPoint="1,0">
+            <GradientStop Color="#00F5FF" Offset="0"/>
+            <GradientStop Color="#0080FF" Offset="1"/>
+        </LinearGradientBrush>
+        
+        <!-- Modern Button Style -->
+        <Style x:Key="CyberButton" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource ButtonGradient}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Height" Value="45"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Effect" Value="{StaticResource ButtonGlow}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="15" 
+                                BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Opacity" Value="0.8"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        
+        <!-- Modern TextBox Style -->
+        <Style x:Key="CyberTextBox" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource CyberSurface}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CyberPrimary}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="15,0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="10">
+                            <ScrollViewer x:Name="PART_ContentHost" 
+                                        Margin="{TemplateBinding Padding}"
+                                        VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        
+        <!-- Panel Style -->
+        <Style x:Key="CyberPanel" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelGradient}"/>
+            <Setter Property="CornerRadius" Value="20"/>
+            <Setter Property="Effect" Value="{StaticResource CyberGlow}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource CyberPrimary}"/>
+            <Setter Property="BorderThickness" Value="2"/>
+        </Style>
+        
+        <!-- Tab Style -->
+        <Style x:Key="CyberTab" TargetType="TabItem">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="20,10"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TabItem">
+                        <Border Name="Border" 
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{StaticResource CyberPrimary}"
+                                BorderThickness="0,0,0,2"
+                                CornerRadius="10,10,0,0"
+                                Margin="2,0">
+                            <ContentPresenter x:Name="ContentSite"
+                                            VerticalAlignment="Center"
+                                            HorizontalAlignment="Center"
+                                            ContentSource="Header"
+                                            Margin="{TemplateBinding Padding}"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource CyberSurface}"/>
+                                <Setter TargetName="Border" Property="BorderThickness" Value="0,0,0,3"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="{StaticResource CyberSecondary}"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    
+    <Border Background="{StaticResource BackgroundGradient}" 
+            CornerRadius="20"
+            Effect="{StaticResource CyberGlow}">
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Title Bar -->
+            <Border Grid.Row="0"
+                    Background="Transparent" 
+                    MouseLeftButtonDown="Border_MouseLeftButtonDown"
+                    CornerRadius="20,20,0,0">
+                <Grid Margin="20,0">
+                    <StackPanel Orientation="Horizontal" 
+                               HorizontalAlignment="Left" 
+                               VerticalAlignment="Center">
+                        <Image Source="logo.png" Width="24" Height="24" Margin="0,0,10,0"/>
+                        <TextBlock Text="🌟 " 
+                                 Foreground="{StaticResource CyberPrimary}" 
+                                 FontWeight="Bold"
+                                 FontSize="16"/>
+                        <TextBlock Text="Red" 
+                                 Foreground="Red" 
+                                 FontWeight="Bold"
+                                 FontSize="16"/>
+                        <TextBlock Text="White" 
+                                 Foreground="White" 
+                                 FontWeight="Bold"
+                                 FontSize="16"/>
+                        <TextBlock Text=" Project" 
+                                 Foreground="{StaticResource CyberPrimary}" 
+                                 FontWeight="Bold"
+                                 FontSize="16"/>
+                    </StackPanel>
+                    <Button Content="✕"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            Width="30" Height="30"
+                            Background="Transparent"
+                            Foreground="{StaticResource CyberPrimary}"
+                            BorderThickness="0"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Click="CloseButton_Click"/>
+                </Grid>
+            </Border>
+            
+            <!-- Main Content -->
+            <TabControl Grid.Row="1" 
+                       Background="Transparent"
+                       BorderThickness="0"
+                       Margin="20,0,20,20">
+                <TabControl.Resources>
+                    <Style TargetType="TabControl">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="TabControl">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <TabPanel Grid.Row="0" 
+                                                IsItemsHost="True" 
+                                                Background="Transparent"/>
+                                        <ContentPresenter Grid.Row="1" 
+                                                        ContentSource="SelectedContent"/>
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </TabControl.Resources>
+                
+                <!-- Main Tab -->
+                <TabItem Header="🏠 ГЛАВНАЯ" Style="{StaticResource CyberTab}">
+                    <Border Style="{StaticResource CyberPanel}" Padding="30" Margin="0,10,0,0">
+                        <StackPanel>
+                            <!-- Header -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,20">
+                                <TextBlock Text="🚀" FontSize="32" Margin="0,0,10,0"/>
+                                <TextBlock Text="AUTOSTARS CONTROL MATRIX" 
+                                         FontSize="24" 
+                                         FontWeight="Bold" 
+                                         Foreground="White"/>
+                            </StackPanel>
+                            
+                            <Rectangle Height="2" Fill="{StaticResource CyberPrimary}" Margin="0,0,0,20"/>
+                            
+                            <!-- Status -->
+                            <TextBlock x:Name="StatusText" 
+                                     Text="СИСТЕМА ОСТАНОВЛЕНА" 
+                                     FontSize="16" 
+                                     FontWeight="Bold" 
+                                     Foreground="Red" 
+                                     HorizontalAlignment="Center"
+                                     Margin="0,0,0,20"/>
+                            
+                            <!-- Control Buttons -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,30">
+                                <Button x:Name="StartButton" 
+                                       Content="🚀 ЗАПУСК СИСТЕМЫ" 
+                                       Style="{StaticResource CyberButton}"
+                                       Width="200"
+                                       Margin="0,0,20,0"
+                                       Click="StartButton_Click"/>
+                                <Button x:Name="StopButton" 
+                                       Content="⏹ ОСТАНОВКА" 
+                                       Style="{StaticResource CyberButton}"
+                                       Width="150"
+                                       IsEnabled="False"
+                                       Click="StopButton_Click"/>
+                            </StackPanel>
+                            
+                            <!-- Statistics -->
+                            <Border Background="{StaticResource CyberSurface}" 
+                                   CornerRadius="15" 
+                                   Padding="20"
+                                   BorderBrush="{StaticResource CyberPrimary}"
+                                   BorderThickness="1">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0" HorizontalAlignment="Center">
+                                        <TextBlock Text="🛒" FontSize="30" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="ЗАКАЗОВ" FontSize="12" Foreground="Gray" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource CyberPrimary}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                    
+                                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                                        <TextBlock Text="⭐" FontSize="30" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="ЗВЁЗД" FontSize="12" Foreground="Gray" HorizontalAlignment="Center"/>
+                                        <TextBlock Text="0" FontSize="24" FontWeight="Bold" Foreground="{StaticResource CyberAccent}" HorizontalAlignment="Center"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+                
+                <!-- Settings Tab -->
+                <TabItem Header="⚙️ НАСТРОЙКИ" Style="{StaticResource CyberTab}">
+                    <Border Style="{StaticResource CyberPanel}" Padding="30" Margin="0,10,0,0">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <StackPanel>
+                                <TextBlock Text="⚙️ СИСТЕМНЫЕ НАСТРОЙКИ" 
+                                         FontSize="20" 
+                                         FontWeight="Bold" 
+                                         Foreground="White"
+                                         Margin="0,0,0,20"/>
+                                
+                                <Rectangle Height="2" Fill="{StaticResource CyberPrimary}" Margin="0,0,0,20"/>
+                                
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="150"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+                                    
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Text="🔑 API TOKEN:" VerticalAlignment="Center" Foreground="White" Margin="0,0,0,15"/>
+                                    <TextBox Grid.Row="0" Grid.Column="1" x:Name="ApiTokenBox" Style="{StaticResource CyberTextBox}" Margin="0,0,0,15"/>
+                                    
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Text="🤖 BOT TOKEN:" VerticalAlignment="Center" Foreground="White" Margin="0,0,0,15"/>
+                                    <TextBox Grid.Row="1" Grid.Column="1" x:Name="BotTokenBox" Style="{StaticResource CyberTextBox}" Margin="0,0,0,15"/>
+                                    
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Text="🗝️ GOLDEN KEY:" VerticalAlignment="Center" Foreground="White" Margin="0,0,0,15"/>
+                                    <TextBox Grid.Row="2" Grid.Column="1" x:Name="GoldenKeyBox" Style="{StaticResource CyberTextBox}" Margin="0,0,0,15"/>
+                                    
+                                    <TextBlock Grid.Row="3" Grid.Column="0" Text="⏱️ ИНТЕРВАЛ:" VerticalAlignment="Center" Foreground="White" Margin="0,0,0,15"/>
+                                    <TextBox Grid.Row="3" Grid.Column="1" x:Name="IntervalBox" Style="{StaticResource CyberTextBox}" Margin="0,0,0,15"/>
+                                    
+                                    <Button Grid.Row="4" Grid.Column="1" 
+                                           Content="💾 СОХРАНИТЬ КОНФИГУРАЦИЮ" 
+                                           Style="{StaticResource CyberButton}"
+                                           HorizontalAlignment="Right"
+                                           Width="250"
+                                           Click="SaveButton_Click"/>
+                                </Grid>
+                            </StackPanel>
+                        </ScrollViewer>
+                    </Border>
+                </TabItem>
+                
+                <!-- About Tab -->
+                <TabItem Header="ℹ️ О НАС" Style="{StaticResource CyberTab}">
+                    <Border Style="{StaticResource CyberPanel}" Padding="30" Margin="0,10,0,0">
+                        <StackPanel HorizontalAlignment="Center">
+                            <TextBlock Text="ℹ️ О РАЗРАБОТЧИКЕ" 
+                                     FontSize="20" 
+                                     FontWeight="Bold" 
+                                     Foreground="White"
+                                     HorizontalAlignment="Center"
+                                     Margin="0,0,0,20"/>
+                            
+                            <Rectangle Height="2" Fill="{StaticResource CyberPrimary}" Margin="0,0,0,30"/>
+                            
+                            <Border Width="150" Height="150" 
+                                   CornerRadius="75" 
+                                   Margin="0,0,0,20"
+                                   Background="{StaticResource CyberSurface}">
+                                <Image Source="photo.png" 
+                                      Width="150" Height="150" 
+                                      Stretch="UniformToFill">
+                                    <Image.Clip>
+                                        <EllipseGeometry Center="75,75" RadiusX="75" RadiusY="75"/>
+                                    </Image.Clip>
+                                </Image>
+                            </Border>
+                            
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,30">
+                                <TextBlock Text="🚀 " FontSize="18" FontWeight="Bold" Foreground="{StaticResource CyberPrimary}"/>
+                                <TextBlock Text="Red" FontSize="18" FontWeight="Bold" Foreground="Red"/>
+                                <TextBlock Text="White" FontSize="18" FontWeight="Bold" Foreground="White"/>
+                                <TextBlock Text=" Project" FontSize="18" FontWeight="Bold" Foreground="{StaticResource CyberPrimary}"/>
+                            </StackPanel>
+                            
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,10">
+                                <TextBlock Text="👤 РАЗРАБОТЧИК: " FontSize="16" Foreground="White"/>
+                                <Button Content="@ruvampir" 
+                                       Background="Transparent" 
+                                       BorderThickness="0" 
+                                       Foreground="{StaticResource CyberPrimary}"
+                                       FontSize="16"
+                                       Click="DeveloperButton_Click"/>
+                            </StackPanel>
+                            
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,30">
+                                <TextBlock Text="📱 КАНАЛ: " FontSize="16" Foreground="White"/>
+                                <Button Content="@AutoZelenka" 
+                                       Background="Transparent" 
+                                       BorderThickness="0" 
+                                       Foreground="{StaticResource CyberPrimary}"
+                                       FontSize="16"
+                                       Click="ChannelButton_Click"/>
+                            </StackPanel>
+                            
+                            <Button Content="📱 ПОДПИСАТЬСЯ НА КАНАЛ" 
+                                   Style="{StaticResource CyberButton}"
+                                   Width="300"
+                                   Click="SubscribeButton_Click"/>
+                        </StackPanel>
+                    </Border>
+                </TabItem>
+            </TabControl>
+        </Grid>
+    </Border>
+</Window>
