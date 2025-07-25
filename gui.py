@@ -149,7 +149,6 @@ class AutoStarsGUI:
             if self.is_running:
                 self.is_running = False
                 if self.bot_thread and self.bot_thread.is_alive():
-                    # Остановка потока бота
                     pass
                 status_text.value = "СИСТЕМА ОСТАНОВЛЕНА"
                 status_text.color = ft.Colors.RED_400
