@@ -1,0 +1,108 @@
+{
+  "PAYMENT": {
+    "api_key": "YOUR_TONAPI_KEY_FROM_TONCONSOLE",
+    "is_testnet": false,
+    "mnemonic": [
+      "word1",
+      "word2",
+      "word3",
+      "word4",
+      "word5",
+      "word6",
+      "word7",
+      "word8",
+      "word9",
+      "word10",
+      "word11",
+      "word12",
+      "word13",
+      "word14",
+      "word15",
+      "word16",
+      "word17",
+      "word18",
+      "word19",
+      "word20",
+      "word21",
+      "word22",
+      "word23",
+      "word24"
+    ],
+    "destination_address": "",
+    "allowed_quantities": [
+      10,
+      15,
+      25,
+      50,
+      75,
+      100,
+      150,
+      200,
+      250,
+      350,
+      500,
+      1000,
+      2500
+    ],
+    "toncenter_url": "https://toncenter.com/api/v3/traces",
+    "confirmation_attempts": 25,
+    "confirmation_delay": 5,
+    "auto_refund": false,
+    "show_sender": "0",
+    "device": "{\"platform\":\"android\",\"appName\":\"Tonkeeper\",\"appVersion\":\"5.0.18\",\"maxProtocolVersion\":2,\"features\":[\"SendTransaction\",{\"name\":\"SendTransaction\",\"maxMessages\":4}]}",
+    "wallet_address": "",
+    "min_balance_reserve": 0.05,
+    "delivery_retry_attempts": 3,
+    "delivery_retry_delay": 5,
+    "payment_method": "ton"
+  },
+  "FRAGMENT": {
+    "hash": "",
+    "cookie": "YOUR_FRAGMENT_COOKIE_HEADER_OR_JSON",
+    "url": "https://fragment.com/api",
+    "stars_page": "https://fragment.com/stars/buy",
+    "test_username": "",
+    "min_stars": 50,
+    "max_stars": 10000000,
+    "rate_limit_delay": 1,
+    "retry_attempts": 3,
+    "hash_cache_ttl": 300
+  },
+  "BOT": {
+    "enabled": 1,
+    "bot_token": "YOUR_BOT_TOKEN"
+  },
+  "FUNPAY": {
+    "golden_key": "YOUR_GOLDEN_KEY"
+  },
+  "SETTINGS": {
+    "db_path": "autostars.db",
+    "request_timeout": 10,
+    "order_check_interval": 10,
+    "admin_telegram_id": null
+  },
+  "AUTOREPLY": {
+    "enabled": 0,
+    "delay": 1,
+    "cooldown": 30,
+    "poll_interval": 2,
+    "rules": [
+      {
+        "triggers": [
+          "привет",
+          "здравствуйте"
+        ],
+        "match": "contains",
+        "response": "Здравствуйте, {username}! Чем могу помочь?"
+      },
+      {
+        "triggers": [
+          "цена",
+          "сколько стоит"
+        ],
+        "match": "contains",
+        "response": "Здравствуйте! Актуальные цены указаны в лотах."
+      }
+    ]
+  }
+}
