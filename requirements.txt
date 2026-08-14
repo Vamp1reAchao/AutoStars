@@ -1,6 +1,6 @@
 aiogram==3.4.1
 FunPayAPI==1.1.0
-flet>=0.90.0,<1
+flet>=0.86.1
 requests>=2.31,<3
 httpx>=0.27,<1
 tonutils==0.5.8
